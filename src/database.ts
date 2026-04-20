@@ -30,11 +30,19 @@ db.exec(`
   );
 
   CREATE TABLE IF NOT EXISTS poll_votes (
-    poll_id   TEXT    NOT NULL REFERENCES polls(id),
-    option_id INTEGER NOT NULL REFERENCES poll_options(id),
-    user_id   TEXT    NOT NULL,
+    poll_id      TEXT    NOT NULL REFERENCES polls(id),
+    option_id    INTEGER NOT NULL REFERENCES poll_options(id),
+    user_id      TEXT    NOT NULL,
+    display_name TEXT,
     PRIMARY KEY (poll_id, option_id, user_id)
   );
 `);
+
+// migrate existing DBs that predate display_name column
+try {
+  db.exec('ALTER TABLE poll_votes ADD COLUMN display_name TEXT');
+} catch {
+  // column already exists, ignore
+}
 
 export default db;

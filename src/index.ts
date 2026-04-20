@@ -2,6 +2,7 @@ import 'dotenv/config';
 import { Client, Collection, Events, GatewayIntentBits, Interaction } from 'discord.js';
 import { Command, ButtonHandler } from './types';
 import { loadModules } from './loader';
+import { startWebServer } from './web/server';
 
 const client = Object.assign(
   new Client({ intents: [GatewayIntentBits.Guilds] }),
@@ -48,3 +49,4 @@ client.on(Events.InteractionCreate, async (interaction: Interaction) => {
 });
 
 client.login(process.env.DISCORD_TOKEN);
+startWebServer(parseInt(process.env.PORT ?? '3003', 10));

@@ -23,6 +23,7 @@ export interface PollVote {
   poll_id: string;
   option_id: number;
   user_id: string;
+  display_name: string | null;
 }
 
 export function createPoll(
@@ -62,7 +63,7 @@ export function getVotesForPoll(pollId: string): PollVote[] {
   return db.prepare('SELECT * FROM poll_votes WHERE poll_id = ?').all(pollId) as PollVote[];
 }
 
-export function toggleVote(pollId: string, optionId: number, userId: string): 'added' | 'removed' {
+export function toggleVote(pollId: string, optionId: number, userId: string, displayName?: string): 'added' | 'removed' {
   const existing = db.prepare(`
     SELECT 1 FROM poll_votes WHERE poll_id = ? AND option_id = ? AND user_id = ?
   `).get(pollId, optionId, userId);
@@ -72,10 +73,15 @@ export function toggleVote(pollId: string, optionId: number, userId: string): 'a
       .run(pollId, optionId, userId);
     return 'removed';
   } else {
-    db.prepare('INSERT INTO poll_votes (poll_id, option_id, user_id) VALUES (?, ?, ?)')
-      .run(pollId, optionId, userId);
+    db.prepare('INSERT INTO poll_votes (poll_id, option_id, user_id, display_name) VALUES (?, ?, ?, ?)')
+      .run(pollId, optionId, userId, displayName ?? null);
     return 'added';
   }
+}
+
+export function getWebVoterIds(pollId: string): string[] {
+  const rows = db.prepare(`SELECT DISTINCT user_id FROM poll_votes WHERE poll_id = ? AND user_id LIKE 'web:%'`).all(pollId) as { user_id: string }[];
+  return rows.map(r => r.user_id);
 }
 
 export function closePoll(pollId: string): void {

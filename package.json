@@ -10,9 +10,11 @@
     "deploy": "ts-node scripts/deploy.ts"
   },
   "dependencies": {
+    "@types/express": "^5.0.6",
     "better-sqlite3": "^9.4.3",
     "discord.js": "^14.14.1",
-    "dotenv": "^16.4.5"
+    "dotenv": "^16.4.5",
+    "express": "^5.2.1"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.8",

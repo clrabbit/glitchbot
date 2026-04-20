@@ -5,10 +5,15 @@ import {
   ButtonStyle,
   Guild,
 } from 'discord.js';
-import { Poll, PollOption, PollVote, getVotesForPoll } from './db';
+import { Poll, PollOption, getVotesForPoll } from './db';
 
-const CLARITY_BLUE = 0x5865f2;
+const GLITCH_BLUE = 0x5865f2;
 const CLOSED_GREY = 0x747f8d;
+
+async function resolveName(userId: string, displayName: string | null, guild: Guild): Promise<string> {
+  if (displayName) return displayName;
+  return guild.members.fetch(userId).then((m) => m.displayName).catch(() => 'Unknown');
+}
 
 export async function buildPollEmbed(
   poll: Poll,
@@ -17,18 +22,17 @@ export async function buildPollEmbed(
   closed = false
 ) {
   const votes = getVotesForPoll(poll.id);
+  const webUrl = process.env.WEB_URL;
 
   const fields = await Promise.all(
     options.map(async (opt) => {
       const optVotes = votes.filter((v) => v.option_id === opt.id);
       let names = '—';
       if (optVotes.length > 0) {
-        const members = await Promise.all(
-          optVotes.map((v) =>
-            guild.members.fetch(v.user_id).then((m) => m.displayName).catch(() => 'Unknown')
-          )
+        const resolved = await Promise.all(
+          optVotes.map((v) => resolveName(v.user_id, v.display_name, guild))
         );
-        names = members.join(', ');
+        names = resolved.join(', ');
       }
       return {
         name: `${closed ? '🔒' : '📅'} ${opt.label} — ${optVotes.length} available`,
@@ -41,14 +45,20 @@ export async function buildPollEmbed(
   const uniqueVoters = new Set(votes.map((v) => v.user_id)).size;
   const creator = await guild.members.fetch(poll.creator_id).then((m) => m.displayName).catch(() => 'Unknown');
 
-  return new EmbedBuilder()
+  const embed = new EmbedBuilder()
     .setTitle(`🗓️ ${poll.name}`)
-    .setColor(closed ? CLOSED_GREY : CLARITY_BLUE)
+    .setColor(closed ? CLOSED_GREY : GLITCH_BLUE)
     .addFields(fields)
     .setFooter({
       text: `${closed ? 'Closed' : 'Open'} • Created by ${creator} • ${uniqueVoters} ${uniqueVoters === 1 ? 'response' : 'responses'} • ID: ${poll.id}`,
     })
     .setTimestamp(poll.created_at);
+
+  if (!closed && webUrl) {
+    embed.setDescription(`[📊 View & edit availability online](${webUrl}/poll/${poll.id})`);
+  }
+
+  return embed;
 }
 
 export function buildPollButtons(options: PollOption[], pollId: string, disabled = false) {
