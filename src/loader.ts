@@ -3,11 +3,16 @@ import { Command, ButtonHandler, BotModule } from './types';
 
 // Register modules here — adding a new cog is just importing and adding to this array
 import schedulingModule from './modules/scheduling';
+import helpModule from './modules/help';
 
 const modules: BotModule[] = [
   schedulingModule,
+  helpModule,
+  // gameWheelModule,
   // starboardModule,
   // loggingModule,
+  // voiceRoleModule,
+  // audioModule,
 ];
 
 export function loadModules(client: Client & { commands: Collection<string, Command>; buttons: Collection<string, ButtonHandler> }) {
