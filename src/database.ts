@@ -79,6 +79,20 @@ db.exec(`
     last_active INTEGER NOT NULL,
     PRIMARY KEY (user_id, guild_id)
   );
+
+  CREATE TABLE IF NOT EXISTS activity (
+    user_id     TEXT    NOT NULL,
+    guild_id    TEXT    NOT NULL,
+    type        TEXT    NOT NULL,
+    last_active INTEGER NOT NULL,
+    PRIMARY KEY (user_id, guild_id, type)
+  );
+`);
+
+// Migrate legacy voice_activity rows into the unified activity table
+db.exec(`
+  INSERT OR IGNORE INTO activity (user_id, guild_id, type, last_active)
+  SELECT user_id, guild_id, 'voice', last_active FROM voice_activity;
 `);
 
 db.exec(`

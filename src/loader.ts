@@ -7,7 +7,7 @@ import helpModule from './modules/help';
 import gameWheelModule from './modules/gamewheel';
 import starboardModule from './modules/starboard';
 import loggingModule from './modules/logging';
-import voiceRoleModule from './modules/voicerole';
+import activityRolesModule from './modules/activityroles';
 
 const modules: BotModule[] = [
   schedulingModule,
@@ -15,7 +15,7 @@ const modules: BotModule[] = [
   gameWheelModule,
   starboardModule,
   loggingModule,
-  voiceRoleModule,
+  activityRolesModule,
   // audioModule,
 ];
 
