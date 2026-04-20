@@ -73,6 +73,15 @@ db.exec(`
 `);
 
 db.exec(`
+  CREATE TABLE IF NOT EXISTS voice_activity (
+    user_id     TEXT    NOT NULL,
+    guild_id    TEXT    NOT NULL,
+    last_active INTEGER NOT NULL,
+    PRIMARY KEY (user_id, guild_id)
+  );
+`);
+
+db.exec(`
   CREATE TABLE IF NOT EXISTS starboard_posts (
     message_id          TEXT PRIMARY KEY,
     guild_id            TEXT NOT NULL,
