@@ -45,4 +45,34 @@ try {
   // column already exists, ignore
 }
 
+db.exec(`
+  CREATE TABLE IF NOT EXISTS wheel_games (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    guild_id   TEXT    NOT NULL,
+    name       TEXT    NOT NULL,
+    added_by   TEXT    NOT NULL,
+    added_at   INTEGER NOT NULL,
+    UNIQUE(guild_id, name)
+  );
+
+  CREATE TABLE IF NOT EXISTS wheel_spins (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    guild_id   TEXT    NOT NULL,
+    game_id    INTEGER NOT NULL REFERENCES wheel_games(id),
+    spun_by    TEXT    NOT NULL,
+    spun_at    INTEGER NOT NULL,
+    winner_id  TEXT
+  );
+`);
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS starboard_posts (
+    message_id          TEXT PRIMARY KEY,
+    guild_id            TEXT NOT NULL,
+    channel_id          TEXT NOT NULL,
+    starboard_message_id TEXT NOT NULL,
+    star_count          INTEGER NOT NULL DEFAULT 0
+  );
+`);
+
 export default db;

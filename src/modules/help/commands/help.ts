@@ -26,16 +26,15 @@ export const command: Command = {
           ].join('\n'),
         },
         {
-          name: '🎡 Game Wheel *(coming soon)*',
-          value: 'Add games to a wheel, spin to pick one, track win history.',
-        },
-        {
-          name: '⭐ Starboard *(coming soon)*',
-          value: 'Repost highly-reacted messages to a dedicated channel.',
-        },
-        {
-          name: '📝 Message Logging *(coming soon)*',
-          value: 'Log edited and deleted messages to a mod channel.',
+          name: '🎡 Game Wheel',
+          value: [
+            '`/gamewheel add name:"…"` — Add a game to this server\'s wheel.',
+            '`/gamewheel remove name:"…"` — Remove a game (adder or mods only).',
+            '`/gamewheel list` — List all games on the wheel.',
+            '`/gamewheel spin` — Spin the wheel to pick a random game.',
+            '`/gamewheel stats` — Show the win leaderboard.',
+            '`/gamewheel history` — Show recent spin history.',
+          ].join('\n'),
         },
         {
           name: '🔊 Voice Role *(coming soon)*',

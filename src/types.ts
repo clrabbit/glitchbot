@@ -3,6 +3,7 @@ import {
   SlashCommandSubcommandsOnlyBuilder,
   ChatInputCommandInteraction,
   ButtonInteraction,
+  UserSelectMenuInteraction,
   Collection,
 } from 'discord.js';
 
@@ -16,6 +17,11 @@ export interface ButtonHandler {
   execute: (interaction: ButtonInteraction) => Promise<void>;
 }
 
+export interface SelectMenuHandler {
+  customIdPrefix: string;
+  execute: (interaction: UserSelectMenuInteraction) => Promise<void>;
+}
+
 export interface BotEvent {
   name: string;
   once?: boolean;
@@ -26,10 +32,12 @@ export interface BotModule {
   name: string;
   commands?: Command[];
   buttons?: ButtonHandler[];
+  selectMenus?: SelectMenuHandler[];
   events?: BotEvent[];
 }
 
 export interface ExtendedClient {
   commands: Collection<string, Command>;
   buttons: Collection<string, ButtonHandler>;
+  selectMenus: Collection<string, SelectMenuHandler>;
 }
