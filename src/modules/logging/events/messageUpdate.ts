@@ -1,5 +1,6 @@
 import { Message, EmbedBuilder, TextChannel, PartialMessage } from 'discord.js';
 import { BotEvent } from '../../../types';
+import { isLoggingEnabled } from '../db';
 
 const EDIT_LOG_CHANNEL_ID = process.env.EDIT_LOG_CHANNEL_ID ?? '416631355091320843';
 
@@ -13,6 +14,7 @@ const messageUpdateEvent: BotEvent = {
     const oldMessage = args[0] as Message | PartialMessage;
     let newMessage = args[1] as Message | PartialMessage;
 
+    if (!isLoggingEnabled()) return;
     if (newMessage.partial) newMessage = await newMessage.fetch().catch(() => null as never);
     if (!newMessage || !newMessage.guild) return;
     if (newMessage.author?.bot) return;

@@ -66,6 +66,13 @@ db.exec(`
 `);
 
 db.exec(`
+  CREATE TABLE IF NOT EXISTS settings (
+    key   TEXT PRIMARY KEY,
+    value TEXT NOT NULL
+  );
+`);
+
+db.exec(`
   CREATE TABLE IF NOT EXISTS starboard_posts (
     message_id          TEXT PRIMARY KEY,
     guild_id            TEXT NOT NULL,
