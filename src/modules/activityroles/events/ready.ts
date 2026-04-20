@@ -39,7 +39,7 @@ async function runCleanup(client: Client<true>) {
       const member = await guild.members.fetch(row.user_id).catch(() => null);
       if (member?.roles.cache.has(roleId)) {
         await member.roles.remove(roleId).catch((err) =>
-          console.error(`[activityroles] Failed to remove ${type} role from ${row.user_id}:`, err)
+          console.error(`[activityroles] Failed to remove ${type} (${roleId}) role from ${row.user_id}:`, err)
         );
         // If losing Transmitter, also strip color roles
         if (type === 'text') await removeColorRoles(member);
@@ -48,7 +48,8 @@ async function runCleanup(client: Client<true>) {
     }
 
     if (expired.length > 0) {
-      console.log(`[activityroles] Removed ${type} role from ${expired.length} member(s)`);
+      const label = type === 'voice' ? 'Breach' : type === 'text' ? 'Uplink' : 'Detected';
+      console.log(`[activityroles] Removed ${label} role from ${expired.length} member(s)`);
     }
   }
 

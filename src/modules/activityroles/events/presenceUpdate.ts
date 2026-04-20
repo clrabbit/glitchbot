@@ -20,7 +20,7 @@ const presenceUpdateEvent: BotEvent = {
 
     if (!member.roles.cache.has(SIGNAL_ROLE_ID)) {
       await member.roles.add(SIGNAL_ROLE_ID).catch((err) =>
-        console.error(`[activityroles] Failed to add signal role to ${member.id}:`, err)
+        console.error(`[activityroles] Failed to add Detected role to ${member.id}:`, err)
       );
     }
   },

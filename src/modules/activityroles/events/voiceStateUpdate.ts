@@ -20,7 +20,7 @@ const voiceStateUpdateEvent: BotEvent = {
 
     if (!member.roles.cache.has(VOICE_ROLE_ID)) {
       await member.roles.add(VOICE_ROLE_ID).catch((err) =>
-        console.error(`[activityroles] Failed to add voice role to ${member.id}:`, err)
+        console.error(`[activityroles] Failed to add Breach role to ${member.id}:`, err)
       );
     }
   },

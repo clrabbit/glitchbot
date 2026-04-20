@@ -31,7 +31,7 @@ export const colorCommand: Command = {
   async execute(interaction: ChatInputCommandInteraction) {
     const member = interaction.member as GuildMember;
     if (!member.roles.cache.has(TRANSMITTER_ROLE_ID)) {
-      await interaction.reply({ content: 'You need the Transmitter role to pick a color.', ephemeral: true });
+      await interaction.reply({ content: 'You need the Uplink role to pick a color.', ephemeral: true });
       return;
     }
 

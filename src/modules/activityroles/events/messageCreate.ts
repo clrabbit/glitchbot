@@ -24,7 +24,7 @@ const messageCreateEvent: BotEvent = {
 
     for (const roleId of rolesToAdd) {
       await member.roles.add(roleId).catch((err) =>
-        console.error(`[activityroles] Failed to add role ${roleId} to ${member.id}:`, err)
+        console.error(`[activityroles] Failed to add Uplink/Detected role ${roleId} to ${member.id}:`, err)
       );
     }
   },
