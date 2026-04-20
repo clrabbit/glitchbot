@@ -4,7 +4,7 @@ import { Command } from '../../../types';
 const TRANSMITTER_ROLE_ID = process.env.TRANSMITTER_ROLE_ID ?? '1495894538852499568';
 
 const COLOR_ROLES: Record<string, string> = {
-  cyan: process.env.COLOR_CYAN_ROLE_ID ?? '1495895661370019880',
+  cyan: process.env.COLOR_CYAN_ROLE_ID ?? '1495899440085602424',
   magenta: process.env.COLOR_MAGENTA_ROLE_ID ?? '1495895854219792575',
   yellow: process.env.COLOR_YELLOW_ROLE_ID ?? '1495896045211750410',
   purple: process.env.COLOR_PURPLE_ROLE_ID ?? '1495896239215087636',
