@@ -38,12 +38,31 @@ db.exec(`
   );
 `);
 
-// migrate existing DBs that predate display_name column
-try {
-  db.exec('ALTER TABLE poll_votes ADD COLUMN display_name TEXT');
-} catch {
-  // column already exists, ignore
+// Migrations — wrapped in try/catch so they're no-ops if column already exists
+for (const sql of [
+  `ALTER TABLE poll_votes ADD COLUMN display_name TEXT`,
+  `ALTER TABLE polls ADD COLUMN poll_type TEXT NOT NULL DEFAULT 'slots'`,
+  `ALTER TABLE polls ADD COLUMN start_time INTEGER`,
+  `ALTER TABLE polls ADD COLUMN end_time INTEGER`,
+  `ALTER TABLE polls ADD COLUMN timezone TEXT`,
+]) {
+  try { db.exec(sql); } catch {}
 }
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS user_timezones (
+    user_id  TEXT PRIMARY KEY,
+    timezone TEXT NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS poll_availability (
+    poll_id      TEXT    NOT NULL REFERENCES polls(id),
+    user_id      TEXT    NOT NULL,
+    display_name TEXT,
+    slot_time    INTEGER NOT NULL,
+    PRIMARY KEY (poll_id, user_id, slot_time)
+  );
+`);
 
 db.exec(`
   CREATE TABLE IF NOT EXISTS wheel_games (

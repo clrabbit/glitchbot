@@ -10,6 +10,17 @@ export interface Poll {
   name: string;
   created_at: number;
   closed: number;
+  poll_type: 'slots' | 'calendar';
+  start_time: number | null;
+  end_time: number | null;
+  timezone: string | null;
+}
+
+export interface CalendarAvailability {
+  poll_id: string;
+  user_id: string;
+  display_name: string | null;
+  slot_time: number;
 }
 
 export interface PollOption {
@@ -86,6 +97,60 @@ export function getWebVoterIds(pollId: string): string[] {
 
 export function closePoll(pollId: string): void {
   db.prepare('UPDATE polls SET closed = 1 WHERE id = ?').run(pollId);
+}
+
+export function getUserTimezone(userId: string): string | null {
+  const row = db.prepare('SELECT timezone FROM user_timezones WHERE user_id = ?').get(userId) as { timezone: string } | undefined;
+  return row?.timezone ?? null;
+}
+
+export function setUserTimezone(userId: string, timezone: string): void {
+  db.prepare('INSERT OR REPLACE INTO user_timezones (user_id, timezone) VALUES (?, ?)').run(userId, timezone);
+}
+
+export function createCalendarPoll(
+  guildId: string,
+  channelId: string,
+  creatorId: string,
+  name: string,
+  startTime: number,
+  endTime: number,
+  timezone: string
+): Poll {
+  const id = randomUUID().slice(0, 8);
+  db.prepare(`
+    INSERT INTO polls (id, guild_id, channel_id, creator_id, name, created_at, poll_type, start_time, end_time, timezone)
+    VALUES (?, ?, ?, ?, ?, ?, 'calendar', ?, ?, ?)
+  `).run(id, guildId, channelId, creatorId, name, Date.now(), startTime, endTime, timezone);
+  return getPoll(id)!;
+}
+
+export function getPollSlots(poll: Poll): number[] {
+  if (!poll.start_time || !poll.end_time) return [];
+  const slotMs = 60 * 60 * 1000;
+  const slots: number[] = [];
+  for (let t = poll.start_time; t < poll.end_time; t += slotMs) {
+    slots.push(t);
+  }
+  return slots;
+}
+
+export function getCalendarAvailability(pollId: string): CalendarAvailability[] {
+  return db.prepare('SELECT * FROM poll_availability WHERE poll_id = ? ORDER BY slot_time').all(pollId) as CalendarAvailability[];
+}
+
+export function setCalendarAvailability(
+  pollId: string,
+  userId: string,
+  displayName: string,
+  slotTimes: number[]
+): void {
+  const del = db.prepare('DELETE FROM poll_availability WHERE poll_id = ? AND user_id = ?');
+  const ins = db.prepare('INSERT INTO poll_availability (poll_id, user_id, display_name, slot_time) VALUES (?, ?, ?, ?)');
+  db.transaction(() => {
+    del.run(pollId, userId);
+    for (const t of slotTimes) ins.run(pollId, userId, displayName, t);
+  })();
 }
 
 export function addPollOption(pollId: string, label: string): PollOption {

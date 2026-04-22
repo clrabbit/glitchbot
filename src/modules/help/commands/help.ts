@@ -18,12 +18,12 @@ export const command: Command = {
         {
           name: '📅 Scheduling',
           value: [
-            '`/schedule new event:"…"` — Create an availability poll with no pre-set times.',
-            '`/schedule new event:"…" times:"…"` — Create a poll with time options (comma-separated).',
+            '`/schedule timezone` — View or set your timezone (required before creating polls).',
+            '`/schedule new event:"…" start:"May 3 2026 6pm" end:"May 4 2026 11pm"` — Create an availability poll over a date/time range.',
             '`/schedule list` — List all open polls in this server.',
             '`/schedule close id:"…"` — Close a poll (creator or mods only).',
             ``,
-            `Click the time buttons on a poll to mark yourself available. Use the web link in each poll to add time slots or submit availability from your browser.`,
+            `Use the web link in each poll to fill in your availability on a calendar grid — times shown in your local timezone automatically.`,
           ].join('\n'),
         },
         {
