@@ -1,4 +1,5 @@
 import express from 'express';
+import { Client } from 'discord.js';
 import {
   getPoll,
   getPollOptions,
@@ -9,10 +10,28 @@ import {
   setCalendarAvailability,
   getPollSlots,
   setPollRange,
+  Poll,
 } from '../modules/scheduling/db';
+import { buildCalendarPollEmbed, buildCalendarPollButtons } from '../modules/scheduling/embeds';
 import { randomUUID } from 'crypto';
 
 const app = express();
+let discordClient: Client | null = null;
+
+async function updateDiscordMessage(poll: Poll) {
+  if (!discordClient || !poll.message_id) return;
+  try {
+    const guild = await discordClient.guilds.fetch(poll.guild_id);
+    const channel = await guild.channels.fetch(poll.channel_id);
+    if (!channel?.isTextBased()) return;
+    const message = await channel.messages.fetch(poll.message_id);
+    const embed = await buildCalendarPollEmbed(poll, guild);
+    const buttons = buildCalendarPollButtons(poll.id, !!poll.closed);
+    await message.edit({ embeds: [embed], components: buttons });
+  } catch (err) {
+    console.error('[web] Failed to update Discord message:', err);
+  }
+}
 app.use(express.json());
 
 // ── Poll page ────────────────────────────────────────────────────────────────
@@ -51,8 +70,8 @@ app.post('/poll/:id/availability', (req, res) => {
 
   const userId = `web:${name.trim().toLowerCase().replace(/\s+/g, '_')}`;
   setCalendarAvailability(poll.id, userId, name.trim(), filtered);
-
   res.json({ ok: true, userId });
+  updateDiscordMessage(getPoll(poll.id)!);
 });
 
 app.post('/poll/:id/range', (req, res) => {
@@ -69,6 +88,7 @@ app.post('/poll/:id/range', (req, res) => {
 
   setPollRange(poll.id, startTime, endTime, timezone);
   res.json({ ok: true });
+  updateDiscordMessage(getPoll(poll.id)!);
 });
 
 app.get('/poll/:id/availability', (req, res) => {
@@ -784,6 +804,7 @@ document.getElementById('save-btn').addEventListener('click', async () => {
 </html>`;
 }
 
-export function startWebServer(port: number) {
+export function startWebServer(port: number, client: Client) {
+  discordClient = client;
   app.listen(port, () => console.log(`[GlitchBot] Web server on port ${port}`));
 }

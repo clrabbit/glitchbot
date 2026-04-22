@@ -84,4 +84,4 @@ client.on(Events.InteractionCreate, async (interaction: Interaction) => {
 });
 
 client.login(process.env.DISCORD_TOKEN);
-startWebServer(parseInt(process.env.PORT ?? '3003', 10));
+startWebServer(parseInt(process.env.PORT ?? '3003', 10), client);
