@@ -8,6 +8,7 @@ import {
   getCalendarAvailability,
   setCalendarAvailability,
   getPollSlots,
+  setPollRange,
 } from '../modules/scheduling/db';
 import { randomUUID } from 'crypto';
 
@@ -21,6 +22,9 @@ app.get('/poll/:id', (req, res) => {
   if (!poll) return res.status(404).send(renderError('Poll not found'));
 
   if (poll.poll_type === 'calendar') {
+    if (!poll.start_time || !poll.end_time) {
+      return res.send(renderSetRangePage(poll));
+    }
     const slots = getPollSlots(poll);
     const availability = getCalendarAvailability(poll.id);
     return res.send(renderCalendarPage(poll, slots, availability));
@@ -49,6 +53,22 @@ app.post('/poll/:id/availability', (req, res) => {
   setCalendarAvailability(poll.id, userId, name.trim(), filtered);
 
   res.json({ ok: true, userId });
+});
+
+app.post('/poll/:id/range', (req, res) => {
+  const poll = getPoll(req.params.id);
+  if (!poll || poll.poll_type !== 'calendar') return res.status(404).json({ error: 'Poll not found' });
+  if (poll.closed) return res.status(400).json({ error: 'Poll is closed' });
+
+  const { startTime, endTime, timezone } = req.body as { startTime: number; endTime: number; timezone: string };
+  if (!startTime || !endTime || !timezone) return res.status(400).json({ error: 'startTime, endTime, and timezone are required' });
+  if (endTime <= startTime) return res.status(400).json({ error: 'End must be after start' });
+
+  const hours = (endTime - startTime) / (1000 * 60 * 60);
+  if (hours < 1 || hours > 168) return res.status(400).json({ error: 'Range must be 1 hour–1 week' });
+
+  setPollRange(poll.id, startTime, endTime, timezone);
+  res.json({ ok: true });
 });
 
 app.get('/poll/:id/availability', (req, res) => {
@@ -671,6 +691,94 @@ document.getElementById('submit-btn').addEventListener('click', async () => {
   } finally { btn.disabled = false; }
 });
 `}
+</script>
+</body>
+</html>`;
+}
+
+function renderSetRangePage(poll: { id: string; name: string; closed: number }) {
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${escHtml(poll.name)} — GlitchBot</title>
+  <style>
+    ${BASE_CSS}
+    .range-form { display: flex; flex-direction: column; gap: 1rem; }
+    .field { display: flex; flex-direction: column; gap: 0.4rem; }
+    .field label { font-size: 0.875rem; color: var(--muted); }
+    .field input { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 0.6rem 0.9rem; color: var(--text); font-size: 0.95rem; outline: none; }
+    .field input:focus { border-color: var(--accent); }
+    .tz-note { font-size: 0.8rem; color: var(--muted); }
+  </style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>🗓️ ${escHtml(poll.name)}</h1>
+    <p class="meta">Poll ID: ${escHtml(poll.id)}</p>
+  </header>
+  <div class="card">
+    <h2>Set availability window</h2>
+    <p class="hint">No time range has been set yet. Pick the window people should fill in their availability for.</p>
+    <p class="tz-note" id="tz-note"></p>
+    <br/>
+    <div class="range-form">
+      <div class="field">
+        <label>Start</label>
+        <input type="datetime-local" id="start-input" />
+      </div>
+      <div class="field">
+        <label>End</label>
+        <input type="datetime-local" id="end-input" />
+      </div>
+      <div>
+        <button class="submit-btn" id="save-btn">Set window &amp; open calendar</button>
+      </div>
+      <p class="feedback" id="feedback"></p>
+    </div>
+  </div>
+</div>
+<script>
+const POLL_ID = ${JSON.stringify(poll.id)};
+const USER_TZ = Intl.DateTimeFormat().resolvedOptions().timeZone;
+document.getElementById('tz-note').textContent = 'Times are in your local timezone: ' + USER_TZ;
+
+document.getElementById('save-btn').addEventListener('click', async () => {
+  const startVal = document.getElementById('start-input').value;
+  const endVal = document.getElementById('end-input').value;
+  const feedback = document.getElementById('feedback');
+  const btn = document.getElementById('save-btn');
+
+  if (!startVal || !endVal) { feedback.textContent = 'Please set both start and end.'; feedback.className = 'feedback error'; return; }
+
+  const startTime = new Date(startVal).getTime();
+  const endTime = new Date(endVal).getTime();
+
+  if (isNaN(startTime) || isNaN(endTime)) { feedback.textContent = 'Invalid date.'; feedback.className = 'feedback error'; return; }
+  if (endTime <= startTime) { feedback.textContent = 'End must be after start.'; feedback.className = 'feedback error'; return; }
+
+  const hours = (endTime - startTime) / 3600000;
+  if (hours < 1) { feedback.textContent = 'Range must be at least 1 hour.'; feedback.className = 'feedback error'; return; }
+  if (hours > 168) { feedback.textContent = 'Range cannot exceed 1 week.'; feedback.className = 'feedback error'; return; }
+
+  btn.disabled = true;
+  try {
+    const res = await fetch('/poll/' + POLL_ID + '/range', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ startTime, endTime, timezone: USER_TZ })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error);
+    window.location.reload();
+  } catch(e) {
+    feedback.textContent = e.message || 'Something went wrong.';
+    feedback.className = 'feedback error';
+    btn.disabled = false;
+  }
+});
 </script>
 </body>
 </html>`;

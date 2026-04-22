@@ -104,9 +104,9 @@ export async function buildCalendarPollEmbed(poll: Poll, guild: Guild, closed = 
   const creator = await guild.members.fetch(poll.creator_id).then((m) => m.displayName).catch(() => 'Unknown');
   const uniqueUsers = new Set(availability.map((a) => a.user_id)).size;
 
-  const startDt = DateTime.fromMillis(poll.start_time!, { zone: tz });
-  const endDt = DateTime.fromMillis(poll.end_time!, { zone: tz });
-  const rangeStr = `${startDt.toFormat("EEE MMM d h:mma")} – ${endDt.toFormat("EEE MMM d h:mma")} (${tz})`;
+  const rangeStr = poll.start_time && poll.end_time
+    ? `${DateTime.fromMillis(poll.start_time, { zone: tz }).toFormat("EEE MMM d h:mma")} – ${DateTime.fromMillis(poll.end_time, { zone: tz }).toFormat("EEE MMM d h:mma")} (${tz})`
+    : 'Not set yet — open the web link to set the window.';
 
   const slotCounts = new Map<number, Set<string>>();
   for (const a of availability) {

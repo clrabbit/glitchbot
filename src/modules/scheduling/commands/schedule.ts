@@ -88,10 +88,10 @@ export const command: Command = {
           opt.setName('event').setDescription('Event name, e.g. "Game Night"').setRequired(true)
         )
         .addStringOption((opt) =>
-          opt.setName('start').setDescription('Start date/time, e.g. "May 3 2026 6pm"').setRequired(true)
+          opt.setName('start').setDescription('Start date/time, e.g. "May 3 2026 6pm"').setRequired(false)
         )
         .addStringOption((opt) =>
-          opt.setName('end').setDescription('End date/time, e.g. "May 4 2026 11pm"').setRequired(true)
+          opt.setName('end').setDescription('End date/time, e.g. "May 4 2026 11pm"').setRequired(false)
         )
     )
     .addSubcommand((sub) =>
@@ -143,42 +143,51 @@ export const command: Command = {
 
     if (sub === 'new') {
       const name = interaction.options.getString('event', true);
-      const startStr = interaction.options.getString('start', true);
-      const endStr = interaction.options.getString('end', true);
+      const startStr = interaction.options.getString('start');
+      const endStr = interaction.options.getString('end');
 
-      const tz = getUserTimezone(interaction.user.id);
-      if (!tz) {
-        await interaction.reply({
-          content: `Set your timezone first so I know how to read those dates.\nRun: \`/schedule timezone zone:"America/New_York"\``,
-          ephemeral: true,
-        });
-        return;
-      }
+      let startMs: number | null = null;
+      let endMs: number | null = null;
+      let tz: string | null = null;
 
-      const startMs = parseDateTimeInZone(startStr, tz);
-      const endMs = parseDateTimeInZone(endStr, tz);
-
-      if (!startMs) {
-        await interaction.reply({ content: `Couldn't parse the start time **"${startStr}"**. Try something like \`May 3 2026 6pm\` or \`2026-05-03 18:00\`.`, ephemeral: true });
-        return;
-      }
-      if (!endMs) {
-        await interaction.reply({ content: `Couldn't parse the end time **"${endStr}"**. Try something like \`May 4 2026 11pm\` or \`2026-05-04 23:00\`.`, ephemeral: true });
-        return;
-      }
-      if (endMs <= startMs) {
-        await interaction.reply({ content: 'End time must be after start time.', ephemeral: true });
-        return;
-      }
-
-      const hours = (endMs - startMs) / (1000 * 60 * 60);
-      if (hours < 1) {
-        await interaction.reply({ content: 'Range must be at least 1 hour.', ephemeral: true });
-        return;
-      }
-      if (hours > 168) {
-        await interaction.reply({ content: 'Range cannot exceed 1 week.', ephemeral: true });
-        return;
+      if (startStr || endStr) {
+        tz = getUserTimezone(interaction.user.id);
+        if (!tz) {
+          await interaction.reply({
+            content: `Set your timezone first so I know how to read those dates.\nRun: \`/schedule timezone zone:"America/New_York"\``,
+            ephemeral: true,
+          });
+          return;
+        }
+        if (startStr) {
+          startMs = parseDateTimeInZone(startStr, tz);
+          if (!startMs) {
+            await interaction.reply({ content: `Couldn't parse the start time **"${startStr}"**. Try something like \`May 3 2026 6pm\` or \`2026-05-03 18:00\`.`, ephemeral: true });
+            return;
+          }
+        }
+        if (endStr) {
+          endMs = parseDateTimeInZone(endStr, tz);
+          if (!endMs) {
+            await interaction.reply({ content: `Couldn't parse the end time **"${endStr}"**. Try something like \`May 4 2026 11pm\` or \`2026-05-04 23:00\`.`, ephemeral: true });
+            return;
+          }
+        }
+        if (startMs && endMs) {
+          if (endMs <= startMs) {
+            await interaction.reply({ content: 'End time must be after start time.', ephemeral: true });
+            return;
+          }
+          const hours = (endMs - startMs) / (1000 * 60 * 60);
+          if (hours < 1) {
+            await interaction.reply({ content: 'Range must be at least 1 hour.', ephemeral: true });
+            return;
+          }
+          if (hours > 168) {
+            await interaction.reply({ content: 'Range cannot exceed 1 week.', ephemeral: true });
+            return;
+          }
+        }
       }
 
       const poll = createCalendarPoll(
@@ -188,7 +197,7 @@ export const command: Command = {
         name,
         startMs,
         endMs,
-        tz
+        tz ?? getUserTimezone(interaction.user.id)
       );
 
       const embed = await buildCalendarPollEmbed(poll, interaction.guild!);

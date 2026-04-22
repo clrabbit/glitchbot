@@ -113,9 +113,9 @@ export function createCalendarPoll(
   channelId: string,
   creatorId: string,
   name: string,
-  startTime: number,
-  endTime: number,
-  timezone: string
+  startTime: number | null,
+  endTime: number | null,
+  timezone: string | null
 ): Poll {
   const id = randomUUID().slice(0, 8);
   db.prepare(`
@@ -123,6 +123,11 @@ export function createCalendarPoll(
     VALUES (?, ?, ?, ?, ?, ?, 'calendar', ?, ?, ?)
   `).run(id, guildId, channelId, creatorId, name, Date.now(), startTime, endTime, timezone);
   return getPoll(id)!;
+}
+
+export function setPollRange(pollId: string, startTime: number, endTime: number, timezone: string): void {
+  db.prepare('UPDATE polls SET start_time = ?, end_time = ?, timezone = ? WHERE id = ?')
+    .run(startTime, endTime, timezone, pollId);
 }
 
 export function getPollSlots(poll: Poll): number[] {
