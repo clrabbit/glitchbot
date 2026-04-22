@@ -72,7 +72,7 @@ export const command: Command = {
         return;
       }
       const total = getGames(interaction.guildId!).length;
-      await interaction.reply({ content: `✅ Added **${name}** to the wheel. (${total} game${total === 1 ? '' : 's'} total)`, ephemeral: true });
+      await interaction.reply({ content: `✅ **${interaction.user.displayName}** added **${name}** to the wheel. (${total} game${total === 1 ? '' : 's'} total)` });
     }
 
     else if (sub === 'remove') {
@@ -90,7 +90,7 @@ export const command: Command = {
         return;
       }
       removeGame(interaction.guildId!, game.name);
-      await interaction.reply({ content: `🗑️ Removed **${game.name}** from the wheel.`, ephemeral: true });
+      await interaction.reply({ content: `🗑️ **${interaction.user.displayName}** removed **${game.name}** from the wheel.` });
     }
 
     else if (sub === 'list') {
