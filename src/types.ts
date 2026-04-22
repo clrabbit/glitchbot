@@ -3,6 +3,7 @@ import {
   SlashCommandSubcommandsOnlyBuilder,
   SlashCommandOptionsOnlyBuilder,
   ChatInputCommandInteraction,
+  AutocompleteInteraction,
   ButtonInteraction,
   UserSelectMenuInteraction,
   Collection,
@@ -11,6 +12,7 @@ import {
 export interface Command {
   data: SlashCommandBuilder | SlashCommandSubcommandsOnlyBuilder | SlashCommandOptionsOnlyBuilder | Omit<SlashCommandBuilder, 'addSubcommand' | 'addSubcommandGroup'>;
   execute: (interaction: ChatInputCommandInteraction) => Promise<void>;
+  autocomplete?: (interaction: AutocompleteInteraction) => Promise<void>;
 }
 
 export interface ButtonHandler {

@@ -18,7 +18,7 @@ export const command: Command = {
         {
           name: '📅 Scheduling',
           value: [
-            '`/schedule timezone` — View or set your timezone (required before creating polls).',
+            '`/schedule timezone` — View or set your timezone (required before creating polls). Autocompletes common zones.',
             '`/schedule new event:"…" start:"May 3 2026 6pm" end:"May 4 2026 11pm"` — Create an availability poll over a date/time range.',
             '`/schedule list` — List all open polls in this server.',
             '`/schedule close id:"…"` — Close a poll (creator or mods only).',

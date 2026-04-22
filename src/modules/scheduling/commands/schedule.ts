@@ -1,6 +1,7 @@
 import {
   SlashCommandBuilder,
   ChatInputCommandInteraction,
+  AutocompleteInteraction,
   ButtonInteraction,
   PermissionFlagsBits,
 } from 'discord.js';
@@ -19,6 +20,24 @@ import {
   toggleVote,
 } from '../db';
 import { buildPollEmbed, buildPollButtons, buildCalendarPollEmbed, buildCalendarPollButtons } from '../embeds';
+
+const COMMON_TIMEZONES = [
+  { name: 'Pacific Time (US & Canada)',  value: 'America/Los_Angeles' },
+  { name: 'Mountain Time (US & Canada)', value: 'America/Denver' },
+  { name: 'Arizona (no DST)',            value: 'America/Phoenix' },
+  { name: 'Central Time (US & Canada)',  value: 'America/Chicago' },
+  { name: 'Eastern Time (US & Canada)',  value: 'America/New_York' },
+  { name: 'Alaska',                      value: 'America/Anchorage' },
+  { name: 'Hawaii',                      value: 'Pacific/Honolulu' },
+  { name: 'London (GMT/BST)',            value: 'Europe/London' },
+  { name: 'Central Europe (CET/CEST)',   value: 'Europe/Berlin' },
+  { name: 'Moscow (MSK)',                value: 'Europe/Moscow' },
+  { name: 'India (IST)',                 value: 'Asia/Kolkata' },
+  { name: 'Japan (JST)',                 value: 'Asia/Tokyo' },
+  { name: 'Korea (KST)',                 value: 'Asia/Seoul' },
+  { name: 'Australia East (AEST/AEDT)', value: 'Australia/Sydney' },
+  { name: 'New Zealand (NZST/NZDT)',    value: 'Pacific/Auckland' },
+];
 
 function isValidTimezone(tz: string): boolean {
   try {
@@ -51,6 +70,13 @@ function parseDateTimeInZone(input: string, tz: string): number | null {
 }
 
 export const command: Command = {
+  autocomplete: async (interaction: AutocompleteInteraction) => {
+    const focused = interaction.options.getFocused().toLowerCase();
+    const matches = COMMON_TIMEZONES.filter(
+      (tz) => tz.name.toLowerCase().includes(focused) || tz.value.toLowerCase().includes(focused)
+    ).slice(0, 25);
+    await interaction.respond(matches.map((tz) => ({ name: `${tz.name} — ${tz.value}`, value: tz.value })));
+  },
   data: new SlashCommandBuilder()
     .setName('schedule')
     .setDescription('Scheduling and availability tools')
@@ -73,7 +99,7 @@ export const command: Command = {
         .setName('timezone')
         .setDescription('Set your timezone for scheduling')
         .addStringOption((opt) =>
-          opt.setName('zone').setDescription('IANA timezone, e.g. America/New_York').setRequired(false)
+          opt.setName('zone').setDescription('IANA timezone, e.g. America/New_York').setRequired(false).setAutocomplete(true)
         )
     )
     .addSubcommand((sub) =>
