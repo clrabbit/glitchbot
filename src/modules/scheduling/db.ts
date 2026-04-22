@@ -88,6 +88,13 @@ export function closePoll(pollId: string): void {
   db.prepare('UPDATE polls SET closed = 1 WHERE id = ?').run(pollId);
 }
 
+export function addPollOption(pollId: string, label: string): PollOption {
+  const existing = db.prepare('SELECT MAX(position) as maxPos FROM poll_options WHERE poll_id = ?').get(pollId) as { maxPos: number | null };
+  const position = (existing.maxPos ?? -1) + 1;
+  const result = db.prepare('INSERT INTO poll_options (poll_id, label, position) VALUES (?, ?, ?)').run(pollId, label.trim(), position);
+  return db.prepare('SELECT * FROM poll_options WHERE id = ?').get(result.lastInsertRowid) as PollOption;
+}
+
 export function setMessageId(pollId: string, messageId: string): void {
   db.prepare('UPDATE polls SET message_id = ? WHERE id = ?').run(messageId, pollId);
 }

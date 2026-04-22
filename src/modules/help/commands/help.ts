@@ -18,11 +18,12 @@ export const command: Command = {
         {
           name: '📅 Scheduling',
           value: [
-            '`/schedule new name:"…" times:"…"` — Create an availability poll. Separate time options with commas.',
+            '`/schedule new event:"…"` — Create an availability poll with no pre-set times.',
+            '`/schedule new event:"…" times:"…"` — Create a poll with time options (comma-separated).',
             '`/schedule list` — List all open polls in this server.',
             '`/schedule close id:"…"` — Close a poll (creator or mods only).',
             ``,
-            `Click the time buttons on a poll to mark yourself available, or use the web page linked in each poll to add availability from your browser.`,
+            `Click the time buttons on a poll to mark yourself available. Use the web link in each poll to add time slots or submit availability from your browser.`,
           ].join('\n'),
         },
         {

@@ -25,13 +25,13 @@ export const command: Command = {
         .setName('new')
         .setDescription('Create a new availability poll')
         .addStringOption((opt) =>
-          opt.setName('name').setDescription('Event name, e.g. "Game Night"').setRequired(true)
+          opt.setName('event').setDescription('Event name, e.g. "Game Night"').setRequired(true)
         )
         .addStringOption((opt) =>
           opt
             .setName('times')
             .setDescription('Comma-separated time options, e.g. "Sat 8pm, Sun 3pm, Sun 8pm"')
-            .setRequired(true)
+            .setRequired(false)
         )
     )
     .addSubcommand((sub) =>
@@ -50,12 +50,12 @@ export const command: Command = {
     const sub = interaction.options.getSubcommand();
 
     if (sub === 'new') {
-      const name = interaction.options.getString('name', true);
-      const timesRaw = interaction.options.getString('times', true);
-      const times = timesRaw.split(',').map((t) => t.trim()).filter(Boolean);
+      const name = interaction.options.getString('event', true);
+      const timesRaw = interaction.options.getString('times');
+      const times = timesRaw ? timesRaw.split(',').map((t) => t.trim()).filter(Boolean) : [];
 
-      if (times.length < 2) {
-        await interaction.reply({ content: 'Please provide at least 2 time options, separated by commas.', ephemeral: true });
+      if (times.length === 1) {
+        await interaction.reply({ content: 'Please provide at least 2 time options, or leave times blank to add them later.', ephemeral: true });
         return;
       }
       if (times.length > 10) {

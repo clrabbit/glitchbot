@@ -1,5 +1,5 @@
 import express from 'express';
-import { getPoll, getPollOptions, getVotesForPoll, toggleVote } from '../modules/scheduling/db';
+import { getPoll, getPollOptions, getVotesForPoll, toggleVote, addPollOption } from '../modules/scheduling/db';
 import { randomUUID } from 'crypto';
 
 const app = express();
@@ -121,6 +121,14 @@ function renderPollPage(
     .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
     .feedback { margin-top: 0.75rem; font-size: 0.875rem; color: var(--green-light); min-height: 1.2em; }
     .feedback.error { color: #f87171; }
+    .add-slot-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; }
+    .add-slot-card h2 { font-size: 1.1rem; margin-bottom: 0.5rem; }
+    .add-slot-card p { color: var(--muted); font-size: 0.85rem; margin-bottom: 1rem; }
+    .add-slot-row { display: flex; gap: 0.75rem; align-items: center; }
+    .add-slot-row input { flex: 1; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 0.6rem 0.9rem; color: var(--text); font-size: 0.95rem; outline: none; }
+    .add-slot-row input:focus { border-color: var(--accent); }
+    .add-slot-feedback { margin-top: 0.6rem; font-size: 0.875rem; color: var(--green-light); min-height: 1.2em; }
+    .add-slot-feedback.error { color: #f87171; }
   </style>
 </head>
 <body>
@@ -149,6 +157,16 @@ function renderPollPage(
   </div>
 
   ${closed ? '' : `
+  <div class="add-slot-card">
+    <h2>Add a time slot</h2>
+    <p>Add a new time option others can vote on. E.g. "Sat May 3, 7–10pm" or "Sunday afternoon".</p>
+    <div class="add-slot-row">
+      <input type="text" id="slot-input" placeholder="e.g. Saturday 7pm–10pm" maxlength="80" />
+      <button class="submit-btn" id="add-slot-btn">Add slot</button>
+    </div>
+    <p class="add-slot-feedback" id="slot-feedback"></p>
+  </div>
+
   <div class="form-card">
     <h2>Add your availability</h2>
     <div class="name-row">
@@ -194,6 +212,65 @@ function renderGrid() {
 renderGrid();
 
 ${closed ? '' : `
+document.getElementById('add-slot-btn').addEventListener('click', async () => {
+  const label = document.getElementById('slot-input').value.trim();
+  const feedback = document.getElementById('slot-feedback');
+  const btn = document.getElementById('add-slot-btn');
+
+  if (!label) { feedback.textContent = 'Please enter a time slot.'; feedback.className = 'add-slot-feedback error'; return; }
+
+  btn.disabled = true;
+  feedback.textContent = '';
+
+  try {
+    const res = await fetch('/poll/' + POLL_ID + '/option', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ label })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error);
+
+    OPTIONS.push(data.option);
+
+    // add column header
+    const thead = document.querySelector('#grid thead tr');
+    const th = document.createElement('th');
+    th.textContent = data.option.label;
+    thead.appendChild(th);
+
+    // add count cell
+    const countRow = document.querySelector('.count-row');
+    const td = document.createElement('td');
+    td.id = 'count-' + data.option.id;
+    td.textContent = '0';
+    countRow.appendChild(td);
+
+    // add slot button to availability form
+    const slotsDiv = document.querySelector('.slots');
+    const btn2 = document.createElement('button');
+    btn2.className = 'slot-btn';
+    btn2.dataset.id = data.option.id;
+    btn2.textContent = data.option.label;
+    btn2.addEventListener('click', () => {
+      const id = parseInt(btn2.dataset.id);
+      if (selected.has(id)) { selected.delete(id); btn2.classList.remove('selected'); }
+      else { selected.add(id); btn2.classList.add('selected'); }
+    });
+    slotsDiv.appendChild(btn2);
+
+    renderGrid();
+    feedback.textContent = '✓ Time slot added!';
+    feedback.className = 'add-slot-feedback';
+    document.getElementById('slot-input').value = '';
+  } catch(e) {
+    feedback.textContent = e.message || 'Something went wrong.';
+    feedback.className = 'add-slot-feedback error';
+  } finally {
+    btn.disabled = false;
+  }
+});
+
 const selected = new Set();
 document.querySelectorAll('.slot-btn').forEach(btn => {
   btn.addEventListener('click', () => {
@@ -243,6 +320,22 @@ document.getElementById('submit-btn').addEventListener('click', async () => {
 </body>
 </html>`;
 }
+
+app.post('/poll/:id/option', (req, res) => {
+  const poll = getPoll(req.params.id);
+  if (!poll) return res.status(404).json({ error: 'Poll not found' });
+  if (poll.closed) return res.status(400).json({ error: 'Poll is closed' });
+
+  const { label } = req.body as { label: string };
+  if (!label?.trim()) return res.status(400).json({ error: 'Label is required' });
+  if (label.trim().length > 80) return res.status(400).json({ error: 'Label too long (max 80 chars)' });
+
+  const options = getPollOptions(poll.id);
+  if (options.length >= 10) return res.status(400).json({ error: 'Maximum 10 time slots per poll' });
+
+  const option = addPollOption(poll.id, label);
+  res.json({ ok: true, option });
+});
 
 app.get('/poll/:id/data', (req, res) => {
   const poll = getPoll(req.params.id);

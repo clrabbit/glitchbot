@@ -24,23 +24,25 @@ export async function buildPollEmbed(
   const votes = getVotesForPoll(poll.id);
   const webUrl = process.env.WEB_URL;
 
-  const fields = await Promise.all(
-    options.map(async (opt) => {
-      const optVotes = votes.filter((v) => v.option_id === opt.id);
-      let names = '—';
-      if (optVotes.length > 0) {
-        const resolved = await Promise.all(
-          optVotes.map((v) => resolveName(v.user_id, v.display_name, guild))
-        );
-        names = resolved.join(', ');
-      }
-      return {
-        name: `${closed ? '🔒' : '📅'} ${opt.label} — ${optVotes.length} available`,
-        value: names,
-        inline: false,
-      };
-    })
-  );
+  const fields = options.length === 0
+    ? []
+    : await Promise.all(
+        options.map(async (opt) => {
+          const optVotes = votes.filter((v) => v.option_id === opt.id);
+          let names = '—';
+          if (optVotes.length > 0) {
+            const resolved = await Promise.all(
+              optVotes.map((v) => resolveName(v.user_id, v.display_name, guild))
+            );
+            names = resolved.join(', ');
+          }
+          return {
+            name: `${closed ? '🔒' : '📅'} ${opt.label} — ${optVotes.length} available`,
+            value: names,
+            inline: false,
+          };
+        })
+      );
 
   const uniqueVoters = new Set(votes.map((v) => v.user_id)).size;
   const creator = await guild.members.fetch(poll.creator_id).then((m) => m.displayName).catch(() => 'Unknown');
@@ -55,7 +57,10 @@ export async function buildPollEmbed(
     .setTimestamp(poll.created_at);
 
   if (!closed && webUrl) {
-    embed.setDescription(`[📊 View & edit availability online](${webUrl}/poll/${poll.id})`);
+    const desc = options.length === 0
+      ? `No time slots yet. [Add your availability online](${webUrl}/poll/${poll.id})`
+      : `[📊 View & edit availability online](${webUrl}/poll/${poll.id})`;
+    embed.setDescription(desc);
   }
 
   return embed;
