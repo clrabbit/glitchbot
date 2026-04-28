@@ -88,7 +88,7 @@ export function buildPollButtons(options: PollOption[], pollId: string, disabled
     new ButtonBuilder()
       .setCustomId(`sched_close_${pollId}`)
       .setLabel('Close Poll')
-      .setStyle(ButtonStyle.Danger)
+      .setStyle(ButtonStyle.Secondary)
       .setDisabled(disabled)
   );
   rows.push(closeRow);
@@ -150,7 +150,7 @@ export function buildCalendarPollButtons(pollId: string, disabled = false) {
       new ButtonBuilder()
         .setCustomId(`sched_close_${pollId}`)
         .setLabel('Close Poll')
-        .setStyle(ButtonStyle.Danger)
+        .setStyle(ButtonStyle.Secondary)
         .setDisabled(disabled)
     ),
   ];
